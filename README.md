@@ -1,3 +1,3 @@
-# The code of paper A Study of Pre-trained Language Model in Practical Knowledge Base Question Answering
+# The code of paper An Empirical Study of Pre-trained Language Models in Simple Knowledge Graph Question Answering
 
 ### The code will be updated soon.
