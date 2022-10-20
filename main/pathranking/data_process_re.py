@@ -8,16 +8,23 @@ from collections import defaultdict
 import time
 import pandas as pd
 from torchtext import data
+import sys
+sys.path.append("..")
+from mylogger import mylog
+
+# set logger
+my_logger = mylog.log_creater('./log', 'data_process_re-out_mdh')
+
 
 def load_index(filename):
-    print("Loading index map from {}".format(filename))
+    my_logger.warn("Loading index map from {}".format(filename))
     with open(filename, 'rb') as handler:
         index = pickle.load(handler)
     return index
 
 # Load predicted MIDs and relations for each question in valid/test set
 def get_mids(filename, hits):
-    print("Entity Source : {}".format(filename))
+    my_logger.warn("Entity Source : {}".format(filename))
     id2mids = defaultdict(list)
     fin = open(filename)
     for line in fin.readlines():
@@ -30,7 +37,7 @@ def get_mids(filename, hits):
     return id2mids
 
 def get_rels(filename, hits):
-    print("Relation Source : {}".format(filename))
+    my_logger.warn("Relation Source : {}".format(filename))
     id2rels = defaultdict(list)
     fin = open(filename)
     for line in fin.readlines():
@@ -45,7 +52,7 @@ def get_rels(filename, hits):
 
 
 def get_questions(filename):
-    print("getting questions ...")
+    my_logger.warn("getting questions ...")
     id2questions = {}
     id2goldmids = {}
     fin =open(filename)
@@ -60,7 +67,7 @@ def get_questions(filename):
     return id2questions, id2goldmids
 
 def get_mid2wiki(filename):
-    print("Loading Wiki")
+    my_logger.warn("Loading Wiki")
     mid2wiki = defaultdict(bool)
     fin = open(filename)
     for line in fin.readlines():

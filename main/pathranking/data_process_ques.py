@@ -1,5 +1,11 @@
 import pandas as pd
 import time
+import sys
+sys.path.append("..")
+from mylogger import mylog
+
+# set logger
+my_logger = mylog.log_creater('./log', 'data_process_ques-out_mdh')
 
 def convert(ques,label):
     if 'I' not in label or 'O' not in label:
@@ -14,10 +20,12 @@ def convert(ques,label):
             index+=1
         else:
             result+='<e>'
+            #找到第一个不为I的地方
             for i in range(index,len(ques)):
                 if label[i]=='O':
                     index=i
                     break
+            #考虑句子末尾的情况
             if label[index]=='I':
                 return result
         result+=' '
@@ -57,6 +65,8 @@ with open('./valid_ques.txt','w',encoding='utf-8') as f1:
         f1.write(ques)
         f1.write('\n')
         
+print('训练集替换头实体耗时：',total)
+my_logger.info('训练集替换头实体耗时：{}'.format(total))
 
 '''
 ques_list=test['question']

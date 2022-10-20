@@ -11,21 +11,34 @@ from collections import defaultdict
 import time
 import pandas as pd
 
-SCALE='large'
+import sys
+sys.path.append("..")
+from mylogger import mylog
+file_name = os.path.basename(__file__)
+file_name = file_name[0:len(file_name)-3]
+
+SCALE='medium2'
+
+# set logger
+my_logger = mylog.log_creater('./log', file_name+'_'+SCALE+'-out')
+my_logger.warning("\n new process start  \n")
+my_logger.warning(SCALE)
+
+os.makedirs(SCALE,exist_ok=True)
 time_ca=0
 neg_num=10
 train=pd.read_table('../mydata/train.txt', header=None, names=["lineid", "entity_mid", "entity_name", "relation", "object", "question", "tags"])
 valid=pd.read_table('../mydata/valid.txt', header=None, names=["lineid", "entity_mid", "entity_name", "relation", "object", "question", "tags"])
 test=pd.read_table('../mydata/test.txt', header=None, names=["lineid", "entity_mid", "entity_name", "relation", "object", "question", "tags"])
 def load_index(filename):
-    print("Loading index map from {}".format(filename))
+    my_logger.warning("Loading index map from {}".format(filename))
     with open(filename, 'rb') as handler:
         index = pickle.load(handler)
     return index
 
 # Load predicted MIDs and relations for each question in valid/test set
 def get_mids(filename, hits):
-    print("Entity Source : {}".format(filename))
+    my_logger.warning("Entity Source : {}".format(filename))
     id2mids = defaultdict(list)
     fin = open(filename)
     for line in fin.readlines():
@@ -38,7 +51,7 @@ def get_mids(filename, hits):
     return id2mids
 
 def get_rels(filename, hits):
-    print("Relation Source : {}".format(filename))
+    my_logger.warning("Relation Source : {}".format(filename))
     id2rels = defaultdict(list)
     fin = open(filename)
     for line in fin.readlines():
@@ -53,7 +66,7 @@ def get_rels(filename, hits):
 
 
 def get_questions(filename):
-    print("getting questions ...")
+    my_logger.warning("getting questions ...")
     id2questions = {}
     id2goldmids = {}
     fin =open(filename)
@@ -68,7 +81,7 @@ def get_questions(filename):
     return id2questions, id2goldmids
 
 def get_mid2wiki(filename):
-    print("Loading Wiki")
+    my_logger.warning("Loading Wiki")
     mid2wiki = defaultdict(bool)
     fin = open(filename)
     for line in fin.readlines():
@@ -81,6 +94,10 @@ if SCALE=='small':
     index_reach = load_index('../indexes/reachability_2M.pkl')
 if SCALE=='large':
     index_reach = load_index('../indexes/redict.pkl')
+if SCALE=='medium1':
+    index_reach = load_index('../kb_105M/redict.pkl')
+if SCALE=='medium2':
+    index_reach = load_index('../kb_202M/redict.pkl')
 
 total_re=[]
 if SCALE=='small':
@@ -92,6 +109,20 @@ if SCALE=='small':
             line=f.readline()
 if SCALE=='large':
     with open('./relation_large.txt','r',encoding='utf-8') as f:
+        line=f.readline()
+        while line!='':
+            line=line.strip()
+            total_re.append(line)
+            line=f.readline()
+if SCALE=='medium1':
+    with open('./relation_medium1.txt','r',encoding='utf-8') as f:
+        line=f.readline()
+        while line!='':
+            line=line.strip()
+            total_re.append(line)
+            line=f.readline()
+if SCALE=='medium2':
+    with open('./relation_medium2.txt','r',encoding='utf-8') as f:
         line=f.readline()
         while line!='':
             line=line.strip()
@@ -119,10 +150,10 @@ train_mid=train['entity_mid']
 s1=time.time()
 for i in range(0,len(question)):
     re_list=[]
-    if SCALE=='large':
-        tempmid=train_mid[i][3:]
-    else:
+    if SCALE=='small':
         tempmid=train_mid[i]
+    else:
+        tempmid=train_mid[i][3:]
     for j in index_reach[tempmid]:
         j=j.replace('.',' ')
         j=j.replace('_',' ')
@@ -176,10 +207,10 @@ valid_mid=valid['entity_mid']
 s2=time.time()
 for i in range(0,len(question)):
     re_list=[]
-    if SCALE=='large':
-        tempmid=valid_mid[i][3:]
-    else:
+    if SCALE=='small':
         tempmid=valid_mid[i]
+    else:
+        tempmid=valid_mid[i][3:]
     for j in index_reach[tempmid]:
         j=j.replace('.',' ')
         j=j.replace('_',' ')
@@ -204,6 +235,7 @@ for i in range(0,len(question)):
     neg_sample.append(temp)
 e2=time.time()
 time_ca=time_ca+e2-s2
+my_logger.warning('训练集负采样时间：{}'.format(time_ca))
 
 valid_json=dict()
 valid_json["questions"]=question
@@ -211,3 +243,5 @@ valid_json["golds"]=relation
 valid_json["negs"]=neg_sample
 with open(SCALE+'/valid.json', 'w') as f:
     json.dump(valid_json, f,ensure_ascii=False)
+
+my_logger.warning("\n  Program End \n")
